@@ -1,4 +1,4 @@
-import node
+import node 
 
 # print("Welcome to my 8-Puzzle solver")
 
@@ -57,5 +57,8 @@ import node
 #     case 7:
 #         print(7)
 
-root = node.node([1,3,4,8,0,2,7,6,5])
-root.printBoard()
+root = node.Node([1,3,4,8,0,2,7,6,5])
+root.expand_children()
+for child in root.children:
+    child.print_node()
+    

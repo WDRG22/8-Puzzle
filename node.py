@@ -1,79 +1,112 @@
 import numpy as np
 
     
-class node:
-    board = None
+class Node:
+    board = []
     depth = 0
     action = None
     parent = None
-    children = None
-    pathCost = 0
+    children = []
+    path_cost = 0
     expanded = False
-    blankIndex = 0    
     
-    def __init__(self, board, parent=None, children=None, depth=0, pathCost=0, action=None, expanded=False):
+    def __init__(self, board, parent=None, children=[], depth=0, path_cost=0, action=None, expanded=False):
         self.board = board
         self.depth = depth
         self.parent = parent
         self.action = action
         self.children = children
-        self.pathCost = pathCost
+        self.path_cost = path_cost
         self.expanded = expanded
-        self.blankIndex = self.board.index(0)
+        self.blank_index = self.board.index(0)
         
-    def printBoard(self):
+    def print_board(self):
         print(self.board)
+
+    def print_node(self):
+        print(
+            f'\nBoard: {self.board}\n'
+            f'Depth: {self.depth}\n'
+            f'Action: {self.action}\n'
+            f'Parent: {self.parent}\n'
+            f'Children: {self.children}\n'
+            f'Path Cost: {self.path_cost}\n'
+            f'Expanded: {self.expanded}\n'
+            )
+             
+    def print_children(self):
+        for child in self.children:
+            child.print_board()
                 
-    def updateBlankIndex(self):
-        self.blankIndex = self.board.index(0)
+    def get_blank_index(self):
+        return self.board.index(0)
      
-    # Moves blank index if valid
-    def move(self, move):                
-        # If move is valid, swap tiles                  
-        if self.isValidMove(move):
-            if move == 'up':
-                self.swap(self.blankIndex, self.blankIndex - 3)
-            elif move == 'down':
-                self.swap(self.blankIndex, self.blankIndex + 3)
-            elif move == 'left':
-                self.swap(self.blankIndex, self.blankIndex - 1)
-            else:
-                self.swap(self.blankIndex, self.blankIndex + 1)
-        else:
-            print("'{move}' is not a valid move")
-           
     # Checks is given move is valid based on index of blank tile
-    def isValidMove(self, move) -> bool:    
-        index = self.board.index(0)
+    def get_possible_moves(self):    
+        index = self.get_blank_index()
         row = np.floor(index / 3)
         col = index % 3    
         
         if row == 0:
             if col == 0:
-                possibleMoves = ["right", "down"]
+                possible_moves = ["right", "down"]
             elif col == 1:                
-                possibleMoves = ["right", "left", "down"]
+                possible_moves = ["right", "left", "down"]
             else:
-                possibleMoves = ["left", "down"]                
+                possible_moves = ["left", "down"]                
         elif row == 1:
             if col == 0:
-                possibleMoves = ["up", "right", "down"]
+                possible_moves = ["up", "right", "down"]
             elif col == 1:
-                possibleMoves = ["up", "right", "left", "down"]
+                possible_moves = ["up", "right", "left", "down"]
             else:
-                possibleMoves = ["up", "left", "down"]
+                possible_moves = ["up", "left", "down"]
         else:
             if col == 0:
-                possibleMoves = ["up", "right"]
+                possible_moves = ["up", "right"]
             elif col == 1:
-                possibleMoves = ["up", "right", "left"]
+                possible_moves = ["up", "right", "left"]
             else:
-                possibleMoves = ["up", "left"]        
-        return move in possibleMoves     
+                possible_moves = ["up", "left"]        
+        return possible_moves     
      
-    # Swap two tiles                           
+    # Make move on this node's board if valid
+    def move(self, move):
+        possible_moves = self.get_possible_moves
+        if move in possible_moves:
+            self.board = self.makeMove(move)
+        else:
+            print('"{move}" is not a valid move')
+     
+    # Moves blank tile. Returns tuple containing new board and value of tile swapped 
+    # with blank tile. Move validation should occur outside method call
+    def make_move(self, move):                        
+        if move == 'up':
+            new_board = self.swap(self.blank_index, self.blank_index - 3)
+            tile_value = self.board[self.blank_index - 3]
+        elif move == 'down':
+            new_board = self.swap(self.blank_index, self.blank_index + 3)
+            tile_value = self.board[self.blank_index + 3]
+        elif move == 'left':
+            new_board = self.swap(self.blank_index, self.blank_index - 1)
+            tile_value = self.board[self.blank_index - 1]
+        else:
+            new_board = self.swap(self.blank_index, self.blank_index + 1)
+            tile_value = self.board[self.blank_index + 1]
+        return new_board, tile_value
+               
+    # Swap two tiles
     def swap(self, i, j):
         new_board = self.board.copy()
         new_board[i], new_board[j] = new_board[j], new_board[i]
-        self.board = new_board
-        self.updateBlankIndex()
+        return new_board
+        
+    def expand_children(self):
+        possible_moves = self.get_possible_moves()
+        for move in possible_moves:
+            child_board, tile_value = self.make_move(move)
+            child = Node(
+                board=child_board, parent=self, action=move, 
+                depth=self.depth+1, path_cost=self.path_cost+tile_value)
+            self.children.append(child)
+        self.expanded = True
